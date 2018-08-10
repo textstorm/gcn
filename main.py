@@ -24,47 +24,32 @@ def main(args):
 
   config_proto = utils.get_config_proto()
   sess = tf.Session(config=config_proto)
-  model = GCN(args, sess, name="catvae")
+  model = GCN(args, sess, name="gcn")
   summary_writer = tf.summary.FileWriter(log_dir)
 
+  adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask = utils.load_data(args.data_type)
+  features = utils.preprocess_features(features)
+  support = [preprocess_adj(adj)]
+  args.num_supports = 1
+  args.input_size, args.features_size = features[2][1], features[2]
+  args.output_size = y_train.shape[1]
 
   for epoch in range(1, args.nb_epoch + 1):
-    print "Epoch %d start with learning rate %f temperature %f" % \
-        (epoch, model.learning_rate.eval(sess), model.tau.eval(sess))
+    print "Epoch %d start with learning rate" % (epoch, model.learning_rate.eval(sess))
     print "- " * 50
     epoch_start_time = time.time()
-    step_start_time = epoch_start_time
-    for i in range(1, total_batch + 1):
-      x_batch = celeba.next_batch()
 
-      _, loss, rec_loss, kl, global_step, summaries = model.train(x_batch)
-      sess.run(model.tau_decay_op)
+    feed_dict = construct_feed_dict(model, features, support, y_train, train_mask)
+    _, loss, accuracy, summaries = model.train(x_batch, feed_dict)
 
-      if global_step % args.summary_step == 0:
-        summary_writer.add_summary(summaries, global_step)
+    if epoch % args.summary_step == 0:
+      summary_writer.add_summary(summaries, epoch)
 
-      if global_step % args.print_step == 0:
-        print "epoch %d, step %d, loss %f, rec_loss %f, kl_loss %f, time %.2fs" \
-            % (epoch, global_step, loss, rec_loss, kl, time.time()-step_start_time)
-        
-        step_start_time = time.time()
+    if epoch % args.print_step == 0:
+      print "epoch %d, loss %f, time %.2fs" % (epoch, loss, time.time()-step_start_time)
 
     if args.anneal and epoch >= args.anneal_start:
       sess.run(model.lr_decay_op)
-
-    if epoch % args.save_epoch == 0:
-      x_axis = args.batch_size * args.cat_size
-      samples = np.zeros((x_axis, args.cat_range))
-      samples[range(x_axis), np.random.choice(args.cat_range, x_axis)] = 1
-      samples = np.reshape(samples, [args.batch_size, args.cat_size, args.cat_range])
-
-      x_batch = celeba.next_batch()
-      x_recon = model.reconstruct(x_batch)
-      x_generate = model.generate(samples, args.batch_size)
-
-      utils.save_images(x_batch, [10, 10], os.path.join(img_dir, "rawImage%s.jpg" % epoch))
-      utils.save_images(x_recon, [10, 10], os.path.join(img_dir, "reconstruct%s.jpg" % epoch))
-      utils.save_images(x_generate, [10, 10], os.path.join(img_dir, "generate%s.jpg" % epoch))
 
   model.saver.save(sess, os.path.join(save_dir, "model.ckpt"))
   print "Model stored...."
