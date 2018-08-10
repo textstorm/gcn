@@ -24,14 +24,13 @@ class GCN(object):
     self.output_size = args.output_size
     self.num_supports = args.num_supports
     self.features_size = args.features_size
-    self.num_labels = args.num_labels
+    self.num_labels = args.output_size
     self.sess = sess
     self.max_grad_norm = args.max_grad_norm
     self.dropout = args.dropout
     self.learning_rate = tf.Variable(float(args.learning_rate), trainable=False, name="learning_rate")
     self.lr_decay_op = self.learning_rate.assign(tf.multiply(self.learning_rate, args.lr_decay))
     self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
-    self.global_step = tf.Variable(0, trainable=False)
 
     with tf.name_scope("data"):
       self.support: [tf.sparse_placeholder(tf.float32) for _ in range(self.num_supports)],
@@ -92,10 +91,8 @@ class GCN(object):
   def predict(self):
     return tf.nn.softmax(self.outputs)
 
-  def train(self, x_images):
-    feed_dict = {self.x_images: x_images}
-    return self.sess.run([self.train_op, self.loss, self.rec_loss, self.kl,
-        self.global_step, self.summary], feed_dict=feed_dict)
+  def train(self, feed_dict):
+    return self.sess.run([self.train_op, self.loss, self.accuracy, self.summary], feed_dict=feed_dict)
 
   def trainable_vars(self, scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
