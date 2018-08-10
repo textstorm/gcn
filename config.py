@@ -20,7 +20,8 @@ def get_args():
   parser.add_argument('--anneal', type=bool, default=True, help='whether to anneal')
   parser.add_argument('--anneal_start', type=int, default=50, help='anneal start epoch')
   parser.add_argument('--lr_decay', type=float, default=0.97, help='learning rate decay rate')
-  parser.add_argument('--nb_epoch', type=int, default=20, help='The number of epoch') #mni 70
+  parser.add_argument('--nb_epoch', type=int, default=20, help='The number of epoch')
+  parser.add_argument('--dropout', type=float, default=0.5, help='dropout rate')
   parser.add_argument('--learning_rate', type=float, default=0.01, help='Learning rate')
   parser.add_argument('--max_grad_norm', type=float, default=10.0, help='Max norm of gradient')
   parser.add_argument('--print_step', type=int, default=100, help='number step to print')
