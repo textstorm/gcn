@@ -15,6 +15,7 @@ def get_args():
   parser.add_argument('--save_dir', type=str, default='save/saves', help='save path')
 
   parser.add_argument('--hidden_size', type=int, default=16, help="number of units in hidden layer")
+  parser.add_argument('--layers', type=int, default=2, help="number of conv layers")
 
   parser.add_argument('--batch_size', type=int, default=100, help='Train batch size')
   parser.add_argument('--anneal', type=bool, default=True, help='whether to anneal')
