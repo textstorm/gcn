@@ -44,7 +44,7 @@ def main(args):
     if epoch % args.print_epoch == 0:
       feed_dict_val = utils.construct_feed_dict(model, features, support, y_val, val_mask)
       val_loss, val_acc = model.evaluate(feed_dict_val)
-      print "epoch %d, train_loss %f, train_acc %f, val_loss, val_acc, time %.2fs" % \
+      print "epoch %d, train_loss %f, train_acc %f, val_loss %f, val_acc %f, time %.2fs" % \
         (epoch, train_loss, train_acc, val_loss, val_acc, time.time()-epoch_start_time)
 
     if args.anneal and epoch >= args.anneal_start:
