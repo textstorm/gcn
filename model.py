@@ -33,11 +33,11 @@ class GCN(object):
     self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
 
     with tf.name_scope("data"):
-      self.support: [tf.sparse_placeholder(tf.float32) for _ in range(self.num_supports)],
+      self.support = [tf.sparse_placeholder(tf.float32) for _ in range(self.num_supports)],
       self.features = tf.sparse_placeholder(tf.float32, shape=self.features_size)
       self.labels = tf.placeholders(tf.float32, [None, self.num_labels])
       self.labels_mask = tf.placeholders(tf.int32)
-      self.num_features_nonzero: tf.placeholder(tf.int32) 
+      self.num_features_nonzero = tf.placeholder(tf.int32) 
 
     with tf.name_scope("gcn"):
       self.vars = {}
@@ -64,7 +64,7 @@ class GCN(object):
     self.summary = tf.summary.merge_all()
     self.saver = tf.train.Saver(tf.global_variables())
 
-  def graph_convolution(self, inputs, act=tf.nn.relu, sparse_inputs=False)
+  def graph_convolution(self, inputs, act=tf.nn.relu, sparse_inputs=False):
     x = inputs
     x = self.dropout(x, self.dropout, sparse=True)
     supports = []
