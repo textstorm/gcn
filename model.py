@@ -29,7 +29,6 @@ class GCN(object):
     self.l2_rate = args.l2_rate
     self.sess = sess
     self.max_grad_norm = args.max_grad_norm
-    self.dropout = args.dropout
     self.learning_rate = tf.Variable(float(args.learning_rate), trainable=False, name="learning_rate")
     self.lr_decay_op = self.learning_rate.assign(tf.multiply(self.learning_rate, args.lr_decay))
     self.optimizer = tf.train.AdamOptimizer(self.learning_rate)
@@ -39,17 +38,18 @@ class GCN(object):
       self.features = tf.sparse_placeholder(tf.float32, shape=self.features_size)
       self.labels = tf.placeholder(tf.float32, [None, self.num_labels])
       self.labels_mask = tf.placeholder(tf.int32)
-      self.num_features_nonzero = tf.placeholder(tf.int32) 
+      self.num_features_nonzero = tf.placeholder(tf.int32)
+      self.is_train = tf.placeholder(tf.bool, name="istrain")
+      self.dropout = tf.cond(self.is_train, lambda: args.dropout, lambda: 0.0)
 
     with tf.name_scope("gcn"):
       outputs, vars1 = self.graph_convolution(self.features, self.input_size, self.hidden_size, sparse_inputs=True)
-      print vars1
       outputs, _ = self.graph_convolution(outputs, self.hidden_size, self.output_size, act=lambda x:x)
       self.outputs = outputs
 
     with tf.name_scope("loss"):
       self.loss = utils.masked_softmax_cross_entropy(self.outputs, self.labels, self.labels_mask)
-      for var in vars1:
+      for var in vars1.values():
         self.loss += self.l2_rate * tf.nn.l2_loss(var)
       tf.summary.scalar("loss", self.loss)
 
@@ -71,13 +71,11 @@ class GCN(object):
     variables = {}
     for i in range(self.num_supports):
       variables["weights_" + str(i)] = glorot([in_size, out_size], "weights_i" + str(i))
-    variables['bias'] = zeros([out_size], name='bias')
     for i in range(self.num_supports):
       x = self.dot(x, variables["weights_" + str(i)], sparse=sparse_inputs)
       x = self.dot(self.support[i], x, sparse=True)
       supports.append(x)
     output = tf.add_n(supports)
-    output += variables['bias']
     return act(output), variables
 
   def dot(self, x, y, sparse=False):
@@ -93,9 +91,11 @@ class GCN(object):
       return tf.nn.dropout(x, keep_prob=1.0-dropout)
 
   def train(self, feed_dict):
+    feed_dict.update({self.is_train: True})
     return self.sess.run([self.train_op, self.loss, self.accuracy, self.summary], feed_dict=feed_dict)
 
   def evaluate(self, feed_dict):
+    feed_dict.update({self.is_train: False})
     return self.sess.run([self.loss, self.accuracy], feed_dict=feed_dict)
 
   def trainable_vars(self, scope):
