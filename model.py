@@ -63,6 +63,7 @@ class GCN(object):
     self.sess.run(init_op)
     self.summary = tf.summary.merge_all()
     self.saver = tf.train.Saver(tf.global_variables())
+    self.tvars = tf.trainable_variables()
 
   def graph_convolution(self, inputs, in_size, out_size, act=tf.nn.relu, sparse_inputs=False):
     x = inputs
@@ -70,7 +71,7 @@ class GCN(object):
     supports = []
     variables = {}
     for i in range(self.num_supports):
-      variables["weights_" + str(i)] = glorot([in_size, out_size], "weights_i" + str(i))
+      variables["weights_" + str(i)] = glorot([in_size, out_size], "weights_" + str(i))
     for i in range(self.num_supports):
       x = self.dot(x, variables["weights_" + str(i)], sparse=sparse_inputs)
       x = self.dot(self.support[i], x, sparse=True)
