@@ -150,3 +150,10 @@ def masked_accuracy(preds, labels, mask):
   mask /= tf.reduce_mean(mask)
   accuracy_all *= mask
   return tf.reduce_mean(accuracy_all)
+
+def get_config_proto(log_device_placement=False, allow_soft_placement=True):
+  config_proto = tf.ConfigProto(
+      log_device_placement=log_device_placement,
+      allow_soft_placement=allow_soft_placement)
+  config_proto.gpu_options.allow_growth = True
+  return config_proto
