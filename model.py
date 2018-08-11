@@ -88,11 +88,11 @@ class GCN(object):
     else:
       return tf.nn.dropout(x, keep_prob=1.0-dropout)
 
-  def predict(self):
-    return tf.nn.softmax(self.outputs)
-
   def train(self, feed_dict):
     return self.sess.run([self.train_op, self.loss, self.accuracy, self.summary], feed_dict=feed_dict)
+
+  def evaluate(self, feed_dict):
+    return sess.run([model.loss, model.accuracy], feed_dict=feed_dict_val)
 
   def trainable_vars(self, scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
