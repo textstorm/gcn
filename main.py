@@ -12,15 +12,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 def main(args):
   #
   save_dir = args.save_dir
-  log_dir = os.path.args.log_dir
-  train_dir = args.train_dir
+  log_dir = args.log_dir
+  train_dir = args.data_dir
 
   if not os.path.exists(save_dir):
     os.makedirs(save_dir)
   if not os.path.exists(log_dir):
     os.makedirs(log_dir)
-  if not os.path.exists(img_dir):
-    os.makedirs(img_dir)
 
   config_proto = utils.get_config_proto()
   sess = tf.Session(config=config_proto)
