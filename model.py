@@ -26,6 +26,7 @@ class GCN(object):
     self.features_size = args.features_size
     self.hidden_size = args.hidden_size
     self.num_labels = args.output_size
+    self.l2_rate = args.l2_rate
     self.sess = sess
     self.max_grad_norm = args.max_grad_norm
     self.dropout = args.dropout
@@ -41,12 +42,15 @@ class GCN(object):
       self.num_features_nonzero = tf.placeholder(tf.int32) 
 
     with tf.name_scope("gcn"):
-      outputs = self.graph_convolution(self.features, self.input_size, self.hidden_size, sparse_inputs=True)
-      outputs = self.graph_convolution(outputs, self.hidden_size, self.output_size, act=lambda x:x)
+      outputs, vars1 = self.graph_convolution(self.features, self.input_size, self.hidden_size, sparse_inputs=True)
+      print vars1
+      outputs, _ = self.graph_convolution(outputs, self.hidden_size, self.output_size, act=lambda x:x)
       self.outputs = outputs
 
     with tf.name_scope("loss"):
       self.loss = utils.masked_softmax_cross_entropy(self.outputs, self.labels, self.labels_mask)
+      for var in vars1:
+        self.loss += self.l2_rate * tf.nn.l2_loss(var)
       tf.summary.scalar("loss", self.loss)
 
     with tf.name_scope("accuracy"):
@@ -74,7 +78,7 @@ class GCN(object):
       supports.append(x)
     output = tf.add_n(supports)
     output += variables['bias']
-    return act(output)
+    return act(output), variables
 
   def dot(self, x, y, sparse=False):
     if sparse:
@@ -92,7 +96,7 @@ class GCN(object):
     return self.sess.run([self.train_op, self.loss, self.accuracy, self.summary], feed_dict=feed_dict)
 
   def evaluate(self, feed_dict):
-    return sess.run([model.loss, model.accuracy], feed_dict=feed_dict_val)
+    return self.sess.run([self.loss, self.accuracy], feed_dict=feed_dict)
 
   def trainable_vars(self, scope):
     return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope)
